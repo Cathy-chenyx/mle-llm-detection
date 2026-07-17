@@ -1,0 +1,22 @@
+# Original paper repository (130MB+, has own git)
+Mapping-the-Increasing-Use-of-LLMs-in-Scientific-Papers/
+
+# Raw data
+review_text_export/
+review_text_export*.zip
+
+# Packaged snapshots (duplicates of scripts/)
+MLE_LLM/
+MLE_LLM.zip
+
+# Backup files
+project_backups/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

@@ -1,0 +1,63 @@
+[1/55] CS alpha=0.000 -> 0.025±0.003  error=0.025  ETA:37min
+[2/55] CS alpha=0.025 -> 0.054±0.003  error=0.029  ETA:25min
+[3/55] CS alpha=0.050 -> 0.080±0.004  error=0.030  ETA:21min
+[4/55] CS alpha=0.075 -> 0.101±0.004  error=0.026  ETA:18min
+[5/55] CS alpha=0.100 -> 0.128±0.004  error=0.028  ETA:16min
+[6/55] CS alpha=0.125 -> 0.151±0.005  error=0.026  ETA:15min
+[7/55] CS alpha=0.150 -> 0.174±0.005  error=0.024  ETA:14min
+[8/55] CS alpha=0.175 -> 0.194±0.005  error=0.019  ETA:13min
+[9/55] CS alpha=0.200 -> 0.224±0.005  error=0.024  ETA:12min
+[10/55] CS alpha=0.225 -> 0.244±0.005  error=0.019  ETA:12min
+[11/55] CS alpha=0.250 -> 0.269±0.005  error=0.019  ETA:12min
+=== CS 完成 ===
+[12/55] EESS alpha=0.000 -> 0.026±0.003  error=0.026  ETA:12min
+[13/55] EESS alpha=0.025 -> 0.053±0.003  error=0.028  ETA:11min
+[14/55] EESS alpha=0.050 -> 0.077±0.004  error=0.027  ETA:11min
+[15/55] EESS alpha=0.075 -> 0.103±0.004  error=0.028  ETA:10min
+[16/55] EESS alpha=0.100 -> 0.130±0.004  error=0.030  ETA:10min
+[17/55] EESS alpha=0.125 -> 0.150±0.005  error=0.025  ETA:10min
+[18/55] EESS alpha=0.150 -> 0.172±0.005  error=0.022  ETA:9min
+[19/55] EESS alpha=0.175 -> 0.194±0.005  error=0.019  ETA:9min
+[20/55] EESS alpha=0.200 -> 0.220±0.005  error=0.020  ETA:8min
+[21/55] EESS alpha=0.225 -> 0.243±0.005  error=0.018  ETA:8min
+[22/55] EESS alpha=0.250 -> 0.267±0.006  error=0.017  ETA:8min
+=== EESS 完成 ===
+[23/55] Math alpha=0.000 -> 0.021±0.002  error=0.021  ETA:8min
+[24/55] Math alpha=0.025 -> 0.045±0.003  error=0.020  ETA:7min
+[25/55] Math alpha=0.050 -> 0.072±0.003  error=0.022  ETA:7min
+[26/55] Math alpha=0.075 -> 0.094±0.004  error=0.019  ETA:7min
+[27/55] Math alpha=0.100 -> 0.114±0.004  error=0.014  ETA:6min
+[28/55] Math alpha=0.125 -> 0.139±0.004  error=0.014  ETA:6min
+[29/55] Math alpha=0.150 -> 0.160±0.004  error=0.010  ETA:6min
+[30/55] Math alpha=0.175 -> 0.181±0.005  error=0.006  ETA:6min
+[31/55] Math alpha=0.200 -> 0.205±0.005  error=0.005  ETA:5min
+[32/55] Math alpha=0.225 -> 0.230±0.005  error=0.005  ETA:5min
+[33/55] Math alpha=0.250 -> 0.249±0.005  error=0.001  ETA:5min
+=== Math 完成 ===
+[34/55] Phys alpha=0.000 -> 0.026±0.002  error=0.026  ETA:5min
+[35/55] Phys alpha=0.025 -> 0.052±0.003  error=0.027  ETA:4min
+[36/55] Phys alpha=0.050 -> 0.075±0.003  error=0.025  ETA:4min
+[37/55] Phys alpha=0.075 -> 0.100±0.004  error=0.025  ETA:4min
+[38/55] Phys alpha=0.100 -> 0.122±0.004  error=0.022  ETA:4min
+[39/55] Phys alpha=0.125 -> 0.146±0.004  error=0.021  ETA:4min
+[40/55] Phys alpha=0.150 -> 0.170±0.004  error=0.020  ETA:3min
+[41/55] Phys alpha=0.175 -> 0.192±0.005  error=0.017  ETA:3min
+[42/55] Phys alpha=0.200 -> 0.212±0.005  error=0.012  ETA:3min
+[43/55] Phys alpha=0.225 -> 0.235±0.005  error=0.010  ETA:3min
+[44/55] Phys alpha=0.250 -> 0.258±0.005  error=0.008  ETA:2min
+=== Phys 完成 ===
+[45/55] Stat alpha=0.000 -> 0.020±0.002  error=0.020  ETA:2min
+[46/55] Stat alpha=0.025 -> 0.051±0.003  error=0.026  ETA:2min
+[47/55] Stat alpha=0.050 -> 0.074±0.004  error=0.024  ETA:2min
+[48/55] Stat alpha=0.075 -> 0.098±0.004  error=0.023  ETA:2min
+[49/55] Stat alpha=0.100 -> 0.122±0.004  error=0.022  ETA:1min
+[50/55] Stat alpha=0.125 -> 0.144±0.004  error=0.019  ETA:1min
+[51/55] Stat alpha=0.150 -> 0.168±0.005  error=0.018  ETA:1min
+[52/55] Stat alpha=0.175 -> 0.189±0.005  error=0.014  ETA:1min
+[53/55] Stat alpha=0.200 -> 0.211±0.005  error=0.011  ETA:0min
+[54/55] Stat alpha=0.225 -> 0.237±0.005  error=0.012  ETA:0min
+[55/55] Stat alpha=0.250 -> 0.257±0.005  error=0.007  ETA:0min
+=== Stat 完成 ===
+
+全部完成，耗时 12.0 分钟，结果已保存到 /Users/cathy/Documents/学习相关/老段课题组/AI_project/validation_results.txt
+DONE
