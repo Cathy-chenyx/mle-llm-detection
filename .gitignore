@@ -9,6 +9,9 @@ review_text_export*.zip
 MLE_LLM/
 MLE_LLM.zip
 
+# Processed data (large parquet/csv/png files)
+processed_data/
+
 # Backup files
 project_backups/
 
