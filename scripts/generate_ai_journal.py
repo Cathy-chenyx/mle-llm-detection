@@ -68,18 +68,32 @@ def chat_deepseek(prompt, model="deepseek-v4-flash", temperature=1.5, max_tokens
 # ============================================================
 # spaCy 分词
 # ============================================================
+AI_MAX_TEXT_LENGTH = 80_000_000
+
+
 def create_tokenizer():
     nlp = spacy.load("en_core_web_lg")
+    nlp.max_length = AI_MAX_TEXT_LENGTH
 
     def tokenize(text):
         text = text.replace('\n', ' ')
+        if len(text) > AI_MAX_TEXT_LENGTH:
+            text = text[:AI_MAX_TEXT_LENGTH]
+
         sentence_list = []
-        doc = nlp(text)
-        for sent in doc.sents:
-            words = re.findall(r'\b\w+\b', sent.text.lower())
-            words = [w for w in words if not w.isdigit()]
-            if len(words) > 0:
-                sentence_list.append(words)
+        try:
+            doc = nlp(text)
+            for sent in doc.sents:
+                words = re.findall(r'\b\w+\b', sent.text.lower())
+                words = [w for w in words if not w.isdigit()]
+                if len(words) > 0:
+                    sentence_list.append(words)
+        except Exception:
+            for chunk in re.split(r'(?<=[.!?])\s+', text):
+                words = re.findall(r'\b\w+\b', chunk.lower())
+                words = [w for w in words if not w.isdigit()]
+                if len(words) > 0:
+                    sentence_list.append(words)
         return sentence_list
 
     return tokenize

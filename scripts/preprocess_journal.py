@@ -85,18 +85,35 @@ def clean_text(text):
 # ============================================================
 # 2. spaCy 分词（与 tokenize_demo.ipynb 完全一致）
 # ============================================================
+MAX_TEXT_LENGTH = 80_000_000  # 80MB 上限（Nat Commun review_bundle 最大 ~48MB）
+
+
 def create_tokenizer():
     nlp = spacy.load("en_core_web_lg")
+    nlp.max_length = MAX_TEXT_LENGTH  # 默认 1M，放开到 80M
 
     def tokenize(text):
         text = text.replace('\n', ' ')
+
+        # 超长文本分块处理
+        if len(text) > MAX_TEXT_LENGTH:
+            text = text[:MAX_TEXT_LENGTH]
+
         sentence_list = []
-        doc = nlp(text)
-        for sent in doc.sents:
-            words = re.findall(r'\b\w+\b', sent.text.lower())
-            words = [w for w in words if not w.isdigit()]
-            if len(words) > 0:
-                sentence_list.append(words)
+        try:
+            doc = nlp(text)
+            for sent in doc.sents:
+                words = re.findall(r'\b\w+\b', sent.text.lower())
+                words = [w for w in words if not w.isdigit()]
+                if len(words) > 0:
+                    sentence_list.append(words)
+        except Exception:
+            # 极端情况回退：按句子标点简单切分
+            for chunk in re.split(r'(?<=[.!?])\s+', text):
+                words = re.findall(r'\b\w+\b', chunk.lower())
+                words = [w for w in words if not w.isdigit()]
+                if len(words) > 0:
+                    sentence_list.append(words)
         return sentence_list
 
     return tokenize, nlp
