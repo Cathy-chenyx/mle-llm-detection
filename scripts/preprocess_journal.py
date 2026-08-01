@@ -13,6 +13,7 @@
 """
 
 import pandas as pd
+import numpy as np
 import re
 import os
 import argparse
@@ -38,7 +39,57 @@ def parse_args():
                         help="ChatGPT 截止月份（默认 11，即 ≤2022.10 的为 H 语料）")
     parser.add_argument("--h_sample_size", default=40, type=int,
                         help="H 语料采样条数（默认 40）")
+    parser.add_argument("--random_state", default=42, type=int,
+                        help="随机种子（默认 42，保证可复现）")
     return parser.parse_args()
+
+
+# ============================================================
+# 分层随机抽样（按年份）
+# ============================================================
+def stratified_sample_by_year(df, n_total, random_state=42):
+    """按年份分层随机抽样，各年分配比例与其条目数成正比，至少 1 条/年。"""
+    year_counts = df['year'].value_counts().sort_index()
+    years = year_counts.index.tolist()
+    counts = year_counts.values
+
+    # Step 1: 每层至少分配 1 条（如果该层有数据）
+    allocation = np.minimum(counts, 1)  # 每层 1 条
+    remaining = n_total - allocation.sum()
+
+    if remaining < 0:
+        # 年份数超过 n_total，随机选 n_total 个年份各取 1 条
+        sampled_years = np.random.default_rng(random_state).choice(years, n_total, replace=False)
+        sampled = []
+        for yr in sampled_years:
+            yr_group = df[df['year'] == yr]
+            sampled.append(yr_group.sample(n=1, random_state=random_state))
+        return pd.concat(sampled, ignore_index=True)
+
+    # Step 2: 按比例分配剩余名额（largest remainder method）
+    proportions = np.where(counts > 0, counts / counts.sum() * remaining, 0)
+    floors = np.floor(proportions).astype(int)
+    remainders = proportions - floors
+    allocation = allocation + floors
+
+    still_remaining = n_total - allocation.sum()
+    # 按余数降序补齐
+    order = np.argsort(-remainders)
+    for i in range(still_remaining):
+        idx = order[i]
+        if allocation[idx] < counts[idx]:
+            allocation[idx] += 1
+
+    # Step 3: 每层随机抽样
+    sampled = []
+    for i, yr in enumerate(years):
+        if allocation[i] > 0:
+            yr_group = df[df['year'] == yr]
+            n_yr = min(allocation[i], len(yr_group))
+            sampled.append(yr_group.sample(n=n_yr, random_state=random_state))
+
+    result = pd.concat(sampled, ignore_index=True)
+    return result
 
 
 # ============================================================
@@ -211,11 +262,11 @@ def main():
     print(f"  pre-ChatGPT 审稿总数: {len(human_df)} 条")
 
     if len(human_df) > args.h_sample_size:
-        # 按字符数降序取前 N（获取内容最丰富的审稿）
-        human_df['_char_len'] = human_df['cleaned_text'].str.len()
-        human_df = human_df.sort_values('_char_len', ascending=False).head(args.h_sample_size)
-        human_df = human_df.drop(columns=['_char_len'])
-        print(f"  采样 {args.h_sample_size} 条（按字符数降序）")
+        # 按年份分层随机抽样（替代原来的"按字符数降序取前 N"）
+        human_df = stratified_sample_by_year(human_df, args.h_sample_size, random_state=args.random_state)
+        print(f"  分层随机抽样 {args.h_sample_size} 条（按年份比例分配，seed={args.random_state}）")
+        year_alloc = human_df['year'].value_counts().sort_index()
+        print(f"  各年分配: {dict(year_alloc)}")
 
     human_df = human_df.rename(columns={'inference_sentence': 'human_sentence'})
     human_path = human_dir / f"{journal}_human.parquet"

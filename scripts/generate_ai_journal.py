@@ -10,6 +10,7 @@ DeepSeek AI 审稿意见生成脚本（通用版）
 
 import os
 import argparse
+import numpy as np
 import pandas as pd
 from pathlib import Path
 import requests
@@ -33,6 +34,12 @@ def parse_args():
                         help="API temperature（默认 1.5，高变异性）")
     parser.add_argument("--max_tokens", default=4096, type=int,
                         help="API max_tokens（默认 8192）")
+    parser.add_argument("--n_ai_samples", default=100, type=int,
+                        help="AI 语料目标条数（默认 100，每轮 few-shot 随机抽取 10 条 H）")
+    parser.add_argument("--random_state", default=42, type=int,
+                        help="随机种子（默认 42）")
+    parser.add_argument("--n_fewshot", default=10, type=int,
+                        help="每轮 few-shot 示例数（默认 10）")
     return parser.parse_args()
 
 
@@ -151,48 +158,62 @@ def main():
     n_human = len(human_df)
     print(f"  H 语料条目数: {n_human}")
 
-    # 拼接示例（用前 10 条 H 作为 few-shot，每条截断）
-    examples = ""
-    for i, row in human_df.head(10).iterrows():
-        examples += f"[Example {i+1}]\n{row['human_sentence']}\n\n"
-
-    # ---- Stage 1: 生成原始 AI 审稿 ----
-    print("\n--- Stage 1: 生成 AI 审稿 ---")
+    # ---- 生成 AI 审稿 ----
+    print(f"\n目标: {args.n_ai_samples} 条 AI 审稿 (seed={args.random_state})")
+    rng = np.random.default_rng(args.random_state)
     tokenize = create_tokenizer()
     ai_records = []
 
-    for idx, row in tqdm.tqdm(human_df.iterrows(), total=n_human, desc="Stage1"):
+    # 打散 H 语料索引，循环使用
+    h_indices = rng.permutation(n_human)
+    n_fewshot = min(args.n_fewshot, n_human)
+
+    for i in tqdm.tqdm(range(args.n_ai_samples), desc="Generating"):
+        # 每轮随机抽 n_fewshot 条 H 作为 few-shot 示例
+        fewshot_mask = rng.choice(n_human, size=n_fewshot, replace=False)
+        examples = ""
+        for j, mask_idx in enumerate(fewshot_mask):
+            row = human_df.iloc[mask_idx]
+            examples += f"[Example {j+1}]\n{row['human_sentence']}\n\n"
+
         prompt = STAGE1_PROMPT.replace("{examples}", examples)
+
+        # Stage 1
         try:
             raw_review = chat_deepseek(prompt, model=args.api_model,
                                        temperature=args.temperature,
                                        max_tokens=args.max_tokens)
         except Exception as e:
-            print(f"\n  [错误 idx={idx}] Stage1 API 失败: {e}")
+            print(f"\n  [第 {i+1}/{args.n_ai_samples} 条] Stage1 API 失败: {e}")
             time.sleep(5)
             continue
 
-        # ---- Stage 2: 浓缩为 5-7 段 ----
+        # Stage 2
         try:
             condense_prompt = STAGE2_CONDENSE.replace("{review}", raw_review)
             condensed = chat_deepseek(condense_prompt, model=args.api_model,
                                       temperature=0.7, max_tokens=args.max_tokens)
         except Exception as e:
-            print(f"\n  [错误 idx={idx}] Stage2 API 失败: {e}")
+            print(f"\n  [第 {i+1}/{args.n_ai_samples} 条] Stage2 API 失败: {e}")
             time.sleep(5)
             continue
 
-        # ---- 分词 ----
         ai_sentences = tokenize(condensed)
         if len(ai_sentences) > 0:
             ai_records.append({"ai_sentence": ai_sentences})
         else:
-            print(f"\n  [警告 idx={idx}] 分词结果为空，跳过")
+            print(f"\n  [警告 第 {i+1}/{args.n_ai_samples} 条] 分词结果为空，跳过")
 
-        time.sleep(1)  # 限速
+        time.sleep(1)
+
+        # 每 20 条打印进度
+        if (i + 1) % 20 == 0:
+            total_sents = sum(len(r['ai_sentence']) for r in ai_records)
+            print(f"\n  [进度] {i+1}/{args.n_ai_samples} 条, "
+                  f"成功 {len(ai_records)} 条, {total_sents} 句")
 
     # ---- 保存 ----
-    print(f"\n生成 AI 条目: {len(ai_records)}/{n_human}")
+    print(f"\n生成 AI 条目: {len(ai_records)}/{args.n_ai_samples}")
     ai_df = pd.DataFrame(ai_records)
     ai_df.to_parquet(ai_path, index=False)
     print(f"✅ AI 语料保存至: {ai_path}")
