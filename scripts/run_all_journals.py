@@ -60,8 +60,8 @@ PROJECT_DIR = Path("/mnt/data/hermes-workspace/mle-llm-detection")
 OVERLAY_PATH = "/mnt/data/hermes-workspace/public_review_mining_stack/store/exports/data_repairs/unit-aligned-cross-journal-2020-2024-20260714-v3/research_review_units_overlay.sqlite"
 
 # 六刊配置：journal_name (目录名) → DB journal name
+# 注意：peerj_cs 已按会议决定从分析中剔除（2026-08 会议），JOURNALS 仅保留 5 刊
 JOURNALS = [
-    {"dir": "peerj_cs", "db_journal": "PeerJ Comput Sci", "n": 40},
     {"dir": "bmc_med", "db_journal": "BMC Med", "n": 40},
     {"dir": "peerj", "db_journal": "PeerJ", "n": 40},
     {"dir": "f1000research", "db_journal": "F1000Research", "n": 40},
