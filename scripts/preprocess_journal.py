@@ -31,8 +31,12 @@ def parse_args():
                         help="项目根目录（默认自动检测）")
     parser.add_argument("--text_col", default="content",
                         help="正文列名（默认 content）")
-    parser.add_argument("--date_col", default="review_date",
-                        help="用于截取年月的日期列名（默认 review_date）")
+    parser.add_argument("--date_col", default="publication_date",
+                        help="用于截取年月的日期列名（默认 publication_date，即发表日期）")
+    parser.add_argument("--min_year", default=2021, type=int,
+                        help="最小年份（默认 2021，过滤更早数据）")
+    parser.add_argument("--max_year", default=2026, type=int,
+                        help="最大年份（默认 2026，过滤更晚数据）")
     parser.add_argument("--cutoff_year", default=2022, type=int,
                         help="ChatGPT 截止年份（默认 2022）")
     parser.add_argument("--cutoff_month", default=11, type=int,
@@ -224,6 +228,13 @@ def main():
     print(f"从 '{args.date_col}' 提取年月...")
     df = extract_year_month(df, args.date_col)
     print(f"有效日期条目: {len(df)}，年份范围: {df['year'].min()}-{df['year'].max()}")
+
+    # ---- 时间范围过滤（会议决定：限定 2021-2026）----
+    before_range = len(df)
+    df = df[(df['year'] >= args.min_year) & (df['year'] <= args.max_year)].copy()
+    print(f"时间范围限定 {args.min_year}-{args.max_year}: {before_range} → {len(df)} (移除 {before_range - len(df)} 条)")
+    if len(df) == 0:
+        raise ValueError(f"时间范围 {args.min_year}-{args.max_year} 内无数据，请检查过滤条件")
 
     # ---- 清洗文本 ----
     print("清洗 HTML 标签和编辑器注释...")
