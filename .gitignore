@@ -23,3 +23,11 @@ project_backups/
 __pycache__/
 *.pyc
 *.pyo
+
+# Credentials and local secret configuration
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/

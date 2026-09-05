@@ -41,8 +41,8 @@ Pipeline 脚本已收束至 `scripts/` 目录，核心推断模块内嵌于其 `
 ### 1.3 API 配置（Q 语料生成用）
 
 ```
-Base URL:  http://115.190.192.101:3000
-API Key:   sk-OMejlpDRw0vOrmAo8xFuVdAbzU4ls9WCCBONVHRDETSsI5IH
+Base URL:  <INTERNAL_API_BASE_URL>
+API Key:   <REDACTED_API_KEY>
 协议格式:  Anthropic Messages API (anthropic SDK v0.72.0)
 默认模型:  deepseek-v4-flash
 ```
