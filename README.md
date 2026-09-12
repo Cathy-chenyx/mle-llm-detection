@@ -1,184 +1,210 @@
-# LLM Usage Detection in Scientific Peer Reviews via Multi-Prompt MLE
+# LLM Usage Detection in Scientific Peer Reviews
 
-**MLE-based estimation of LLM-modified content proportions in scientific peer reviews, powered by a multi-prompt (A/B/C/D) pipeline with bootstrap confidence intervals.**
+**Population-level estimation of LLM-modified content in scientific peer reviews using an MLE framework, multi-prompt reference corpora, and bootstrap uncertainty quantification.**
 
-## Overview
+## Project Snapshot
 
-The rapid adoption of large language models (LLMs) raises a critical question: to what extent has AI-generated or AI-assisted content permeated the academic peer review process? This project implements and extends the methodology from [Liang et al. (2025)](https://arxiv.org/abs/2503.xxxxx) — a monitoring framework that uses Maximum Likelihood Estimation (MLE) on word-frequency distributions to infer the proportion of LLM-modified text in large corpora, without requiring access to proprietary LLM detection tools.
+This repository explores whether a **population-level statistical framework** originally developed for measuring LLM-modified scientific writing can be adapted to **scientific peer reviews**.
 
-Our adaptation introduces a **multi-prompt gradient pipeline**: human peer reviews are rewritten at four progressively stronger AI-intervention levels (A → D), producing a spectrum of AI corpora. The MLE model is then fit on real-world review data at each level, enabling not just detection but also **profiling of AI intervention depth** across journals and time periods.
+The project builds on the methodology and open-source implementation from:
 
-### Key Features
+> Liang, W., Zhang, Y., Wu, Z., Lepp, H., Ji, W., Zhao, X., Cao, H., Liu, S., He, S., Huang, Z., Yang, D., Potts, C., Manning, C. D., & Zou, J. Y. (2024). *Mapping the Increasing Use of LLMs in Scientific Papers*. arXiv:2404.01268.
 
-- **Four-level multi-prompt pipeline**: Level A (factual extraction) → B (bullet-point rewrite) → C (paragraph rewrite) → D (full rewriting from scratch), capturing a gradient from light AI assistance to full generation.
-- **Self-contained architecture**: Core modules (`MLE.py`, `estimation.py`) are embedded under `scripts/src/`, with no external repository dependencies.
-- **Bootstrap confidence intervals**: Each α estimate comes with 1,000 bootstrap iterations for uncertainty quantification.
-- **Comparative visualization**: Combined plots of estimated LLM-usage rates across prompt levels, time periods, and journals.
-- **eLife pilot study**: Full pipeline validated on the [eLife](https://elifesciences.org/) open peer review dataset (40 human reviews + 12 months of inference data).
+**My extension focuses on:**
+
+- adapting the workflow from scientific-paper text to **open peer-review text**;
+- building an **eLife preprocessing and inference pipeline**;
+- generating four AI reference corpora with progressively stronger rewriting prompts (A/B/C/D);
+- comparing MLE estimates across prompt specifications and time periods;
+- adding end-to-end orchestration, documentation, validation logs, and visualization for the adapted workflow.
+
+> **Important:** the core MLE and text-distribution modules under `scripts/src/` are derived from the original Liang et al. implementation and are not claimed as original code in this repository. See [Third-Party Attribution](#third-party-attribution) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+---
+
+## Research Question
+
+Large language models may influence peer-review writing in ways that are difficult to measure using document-level detectors. This project asks:
+
+> **Can a corpus-level mixture-model framework be adapted to estimate patterns of LLM-modified language in scientific peer reviews, and how sensitive are the estimates to the way the AI reference corpus is constructed?**
+
+The goal is **population-level inference**, not classification of individual reviewers or individual review reports.
+
+---
+
+## Method Overview
+
+The underlying framework treats a target corpus as a mixture of human-written and LLM-modified language distributions. Let:
+
+- `P_H(w)` = probability of word occurrence in the human reference corpus;
+- `P_Q(w)` = probability of word occurrence in the AI-modified reference corpus;
+- `α` = mixture proportion estimated for the target corpus.
+
+The project uses maximum-likelihood estimation (MLE) to estimate `α`, together with bootstrap resampling for uncertainty quantification.
+
+### Multi-Prompt Reference Design
+
+Rather than relying on one rewriting prompt, this adaptation creates four AI reference corpora:
+
+| Level | Prompt strategy | Intended transformation |
+| --- | --- | --- |
+| **A** | Extract factual key points | Minimal structural intervention |
+| **B** | Rewrite as bullet points | Light restructuring |
+| **C** | Rewrite into natural paragraphs | Moderate rewriting |
+| **D** | Rewrite from scratch in a professional tone | Strong rewriting |
+
+These levels are used as a **sensitivity-analysis device** for reference-corpus construction. They should not be interpreted as a validated clinical-style scale of “AI intervention depth.”
+
+---
+
+## What I Built
+
+### 1. eLife peer-review preprocessing
+
+`scripts/preprocess_elife.py`
+
+Transforms open peer-review data into the corpus structure required for downstream distribution estimation and inference.
+
+### 2. Multi-prompt AI corpus generation
+
+`scripts/generate_ai_multi_prompt.py`
+
+Generates four prompt-specific AI reference corpora from human review samples so the downstream MLE estimates can be compared across alternative reference definitions.
+
+### 3. Distribution-building workflow
+
+`scripts/build_distribution.py`
+
+Constructs the word-occurrence distributions used by the mixture-model framework.
+
+### 4. End-to-end inference pipeline
+
+`scripts/run_multi_prompt_pipeline.py`
+
+Runs preprocessing outputs through the prompt-specific distribution files and MLE workflow, then aggregates results for comparison.
+
+### 5. Documentation and reproducibility support
+
+- `docs/pipeline-sop.md` — operation guide
+- `NOTE/` — method notes and code-reading notes
+- `validation/` — validation scripts and logs
+- `output/` — generated reports and visualizations
 
 ---
 
 ## Repository Structure
 
-```
-AI_project/
-├── scripts/                          # Pipeline scripts (self-contained)
-│   ├── src/                          # Core inference modules
-│   │   ├── MLE.py                    # MLE estimator with bootstrap
-│   │   └── estimation.py             # Word-frequency distribution builder
-│   ├── preprocess_elife.py           # Raw review data → structured format
-│   ├── generate_ai_corpus.py         # Single-prompt AI corpus generation
-│   ├── generate_ai_multi_prompt.py   # Multi-prompt (A/B/C/D) AI corpus generation
-│   ├── build_distribution.py         # Build log-probability dictionaries
-│   ├── run_elife_pipeline.py         # End-to-end single-prompt pipeline
-│   └── run_multi_prompt_pipeline.py  # End-to-end multi-prompt pipeline
-├── processed_data/                   # Pipeline outputs (gitignored, generated at runtime)
-│   └── elife/
-│       ├── human_corpus/             # Human-written review samples
-│       ├── ai_corpus/                # AI-generated review variants (parquet)
-│       ├── inference_data/           # Monthly review data for inference
-│       └── distribution/             # Log-probability dictionaries
-├── NOTE/                             # Study notes & learning materials
-│   ├── AI生成内容检测论文学习笔记.md
-│   ├── GitHub仓库解读_Mapping_LLM_Usage.md
-│   ├── MLE_estimation_逐行解读.md
-│   └── 统计理论基础_极大似然估计_混合模型_群体推断.md
-├── Reference/                        # Reference papers (PDF)
-├── docs/                             # Documentation
-│   └── pipeline-sop.md               # Full pipeline SOP
-├── output/                           # Generated reports & visualizations
-├── validation/                       # Validation scripts & logs
+```text
+mle-llm-detection/
+├── scripts/
+│   ├── src/
+│   │   ├── MLE.py
+│   │   └── estimation.py
+│   ├── preprocess_elife.py
+│   ├── generate_ai_corpus.py
+│   ├── generate_ai_multi_prompt.py
+│   ├── build_distribution.py
+│   ├── run_elife_pipeline.py
+│   └── run_multi_prompt_pipeline.py
+├── processed_data/        # generated outputs; mostly gitignored
+├── NOTE/                  # learning and method notes
+├── Reference/             # reference material
+├── docs/
+│   └── pipeline-sop.md
+├── output/
+├── validation/
+├── THIRD_PARTY_NOTICES.md
 └── README.md
 ```
 
 ---
 
-## Methodology
+## Pilot Analysis
 
-### The Mixture Model
+The current repository contains an **exploratory eLife pilot** using open peer-review data and four alternative AI reference corpora.
 
-Given a corpus of peer reviews, each text can be modeled as a mixture of *human-written* and *LLM-modified* components. Following Liang et al. (2025), the probability that a word *w* appears in a random review is:
+In the pilot outputs, the estimated mixture proportion varies across prompt specifications, and the prompt-specific estimates show an ordered pattern in the current experiment.
 
-**P(w) = (1 − α) · P_H(w) + α · P_Q(w)**
+This should be treated as an **exploratory sensitivity result**, not as evidence that the four prompt levels form a validated measure of real-world AI-assistance intensity. The estimates depend on the construction of both the human and AI reference corpora, sample size, preprocessing decisions, vocabulary filtering, and model assumptions.
 
-where:
+### Why this matters
 
-| Parameter | Description |
-|-----------|-------------|
-| α ∈ [0, 1] | Proportion of LLM-modified content (the target of inference) |
-| P_H(w) | Word occurrence probability in the **human** reference corpus |
-| P_Q(w) | Word occurrence probability in the **AI** reference corpus |
+The main methodological lesson is that **reference-corpus design is itself part of the statistical model**. A population-level estimate of LLM-modified content can change depending on how “AI-modified text” is operationalized, so robustness across alternative prompt constructions should be examined rather than assuming one prompt defines the ground truth.
 
-### Multi-Prompt Gradient Design
+---
 
-To capture the *depth* of AI intervention (not just its presence), we generate four AI reference corpora at escalating levels:
+## Limitations
 
-| Level | Prompt Strategy | AI Intervention Depth |
-|-------|----------------|----------------------|
-| **A** | Extract factual key points as a numbered list | Minimal (information preservation) |
-| **B** | Bullet-point rewrite preserving all content | Light (structural changes) |
-| **C** | Paragraph-form rewrite, natural flow | Moderate (compositional changes) |
-| **D** | Full rewrite from scratch in professional tone | Heavy (creative reformulation) |
+This is a research and learning project, not a production detector.
 
-Each level produces a distinct P_Q(w) distribution. Running MLE inference at all four levels on the same real-world data reveals not just *if* AI was used, but *how deeply*.
+Key limitations include:
 
-### Estimation
-
-1. **Build distributions**: Compute binary word occurrence probabilities P_H(w) and P_Q(w) from reference corpora, filtered by vocabulary intersection and frequency thresholds.
-2. **MLE with bootstrap**: For each monthly batch of real reviews, fit α that maximizes the binomial mixture log-likelihood. Repeat with 1,000 bootstrap resamples per batch to obtain 95% confidence intervals.
+- the current analysis is based on a limited pilot rather than a comprehensive multi-journal study;
+- prompt-generated AI reference corpora may not represent how researchers actually use LLMs during peer review;
+- `α` is a corpus-level statistical estimate and must not be interpreted as the probability that any individual review was AI-written;
+- estimates may be sensitive to preprocessing, vocabulary thresholds, reference-corpus composition, and model assumptions;
+- the current multi-prompt design is exploratory and requires broader validation before stronger claims can be made.
 
 ---
 
 ## Quick Start
 
-### Prerequisites
+### Environment
 
-- **Python 3.8+** with conda environment `llm-detection`
-- Core dependencies: `pandas`, `numpy`, `scipy`, `swifter`, `matplotlib`
-- AI corpus generation requires Anthropic-compatible API access (`DEEPSEEK_API_KEY` environment variable)
+Python 3.8+ with core dependencies including:
 
-### Setup
+- `pandas`
+- `numpy`
+- `scipy`
+- `swifter`
+- `matplotlib`
 
-```bash
-# Clone the repository
-git clone https://github.com/Cathy-chenyx/mle-llm-detection.git
-cd mle-llm-detection
-
-# Activate environment
-conda activate llm-detection
-```
-
-### Run the Multi-Prompt Pipeline
-
-```bash
-# Step 1: Generate multi-prompt AI corpora (A/B/C/D)
-python scripts/generate_ai_multi_prompt.py
-
-# Step 2: Build log-probability dictionaries for each level
-python scripts/build_distribution.py
-
-# Step 3: Run full MLE inference pipeline
-python scripts/run_multi_prompt_pipeline.py
-```
-
-Output is written to `processed_data/elife/`, including `.csv` alpha estimates, `.parquet` distribution files, and a combined comparison plot.
-
-### API Key Configuration
-
-AI corpus generation (`generate_ai_multi_prompt.py`) calls a DeepSeek API endpoint and reads the key from the environment:
+AI reference-corpus generation additionally requires an API credential configured through the environment rather than hard-coded in source.
 
 ```bash
 export DEEPSEEK_API_KEY="your-key-here"
 ```
 
-No API keys are hardcoded in the source.
+### Run the multi-prompt workflow
 
----
-
-## Key Results (eLife Pilot)
-
-The pipeline was validated on the [eLife](https://elifesciences.org/) open peer review dataset covering 12 months of review data. The multi-prompt (A/B/C/D) pipeline successfully:
-
-- Generated four distinct AI reference corpora with clearly differentiated word-frequency profiles
-- Produced stable α estimates with tight bootstrap confidence intervals
-- Revealed a monotonic gradient: **α_A < α_B < α_C < α_D**, confirming that more aggressive prompts produce systematically distinguishable signals
-
-Detailed progress reports and comparison plots are available in the `output/` directory.
-
----
-
-## Documentation
-
-- [pipeline-sop.md](docs/pipeline-sop.md) — Full step-by-step pipeline operation manual
-- [output/](output/) — Progress reports and MLE results
-- [NOTE/](NOTE/) — Study notes covering MLE theory, paper analyses, and code walkthroughs
-
----
-
-## Citation
-
-If you use this code or methodology in your research, please cite:
-
-> Liang, W., Izzo, Z., Zhang, Y., Lepp, H., Cao, H., Zhao, X., Ye, C., Liu, S., Huang, Z., McFarland, D.A., & Zou, J.Y. (2025). Quantifying large language model usage in scientific papers. *arXiv preprint*.
-
-```bibtex
-@article{liang2025quantifying,
-  title={Quantifying Large Language Model Usage in Scientific Papers},
-  author={Liang, Weixin and Izzo, Zachary and Zhang, Yaohui and Lepp, Haley and Cao, Hancheng and Zhao, Xuandong and Ye, Chen and Liu, Sheng and Huang, Zhi and McFarland, Daniel A and Zou, James Y},
-  journal={arXiv preprint arXiv:2501.xxxxx},
-  year={2025}
-}
+```bash
+python scripts/generate_ai_multi_prompt.py
+python scripts/build_distribution.py
+python scripts/run_multi_prompt_pipeline.py
 ```
 
+Generated analysis files are written under `processed_data/` and `output/` according to the pipeline configuration.
+
 ---
 
-## License
+## Third-Party Attribution
 
-This project is for academic research purposes. Please refer to the original [Mapping-the-Increasing-Use-of-LLMs-in-Scientific-Papers](https://github.com/) repository for licensing terms on the base methodology.
+The statistical framework and core implementation in:
+
+- `scripts/src/MLE.py`
+- `scripts/src/estimation.py`
+
+are derived from the open-source repository:
+
+[Weixin-Liang/Mapping-the-Increasing-Use-of-LLMs-in-Scientific-Papers](https://github.com/Weixin-Liang/Mapping-the-Increasing-Use-of-LLMs-in-Scientific-Papers)
+
+The upstream code is distributed under the **MIT License**. The original copyright and permission notice are reproduced in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
+The preprocessing, peer-review adaptation, multi-prompt reference-corpus workflow, orchestration, documentation, and project-specific analysis in this repository are extensions built for this project.
+
+---
+
+## Reference
+
+Liang, W., Zhang, Y., Wu, Z., Lepp, H., Ji, W., Zhao, X., Cao, H., Liu, S., He, S., Huang, Z., Yang, D., Potts, C., Manning, C. D., & Zou, J. Y. (2024). **Mapping the Increasing Use of LLMs in Scientific Papers.** arXiv:2404.01268.
+
+- Paper: https://arxiv.org/abs/2404.01268
+- Original implementation: https://github.com/Weixin-Liang/Mapping-the-Increasing-Use-of-LLMs-in-Scientific-Papers
 
 ---
 
 ## Contact
 
-**Chen Yuxin (Cathy)** — Biostatistics graduate student, Southern Medical University  
+**Yixin Chen (Cathy)**  
+Applied Statistics / Biostatistics, Southern Medical University  
 GitHub: [@Cathy-chenyx](https://github.com/Cathy-chenyx)
