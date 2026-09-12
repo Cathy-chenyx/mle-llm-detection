@@ -1,6 +1,6 @@
 # LLM Usage Detection in Scientific Peer Reviews
 
-**Population-level estimation of LLM-modified content in scientific peer reviews using an MLE framework, multi-prompt reference corpora, and bootstrap uncertainty quantification.**
+**Population-level estimation of LLM-modified language in scientific peer reviews using an MLE framework, alternative AI reference corpora, and bootstrap uncertainty quantification.**
 
 ## Project Snapshot
 
@@ -12,13 +12,13 @@ The project builds on the methodology and open-source implementation from:
 
 **My extension focuses on:**
 
-- adapting the workflow from scientific-paper text to **open peer-review text**;
-- building an **eLife preprocessing and inference pipeline**;
-- generating four AI reference corpora with progressively stronger rewriting prompts (A/B/C/D);
-- comparing MLE estimates across prompt specifications and time periods;
-- adding end-to-end orchestration, documentation, validation logs, and visualization for the adapted workflow.
+- adapting the workflow from scientific-paper text to open peer-review text;
+- building an eLife preprocessing and inference pipeline;
+- implementing alternative prompt specifications for AI reference-corpus construction;
+- comparing how reference-corpus design can affect downstream MLE estimates;
+- adding project-specific orchestration, documentation, validation logs, and analysis outputs.
 
-> **Important:** the core MLE and text-distribution modules under `scripts/src/` are derived from the original Liang et al. implementation and are not claimed as original code in this repository. See [Third-Party Attribution](#third-party-attribution) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+> **Attribution:** the core MLE and text-distribution modules under `scripts/src/` are derived from the original Liang et al. implementation and are not claimed as original code in this repository. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 ---
 
@@ -26,7 +26,7 @@ The project builds on the methodology and open-source implementation from:
 
 Large language models may influence peer-review writing in ways that are difficult to measure using document-level detectors. This project asks:
 
-> **Can a corpus-level mixture-model framework be adapted to estimate patterns of LLM-modified language in scientific peer reviews, and how sensitive are the estimates to the way the AI reference corpus is constructed?**
+> **Can a corpus-level mixture-model framework be adapted to estimate patterns of LLM-modified language in scientific peer reviews, and how sensitive are the estimates to the construction of the AI reference corpus?**
 
 The goal is **population-level inference**, not classification of individual reviewers or individual review reports.
 
@@ -40,20 +40,20 @@ The underlying framework treats a target corpus as a mixture of human-written an
 - `P_Q(w)` = probability of word occurrence in the AI-modified reference corpus;
 - `α` = mixture proportion estimated for the target corpus.
 
-The project uses maximum-likelihood estimation (MLE) to estimate `α`, together with bootstrap resampling for uncertainty quantification.
+Maximum-likelihood estimation is used to estimate `α`, with bootstrap resampling for uncertainty quantification.
 
-### Multi-Prompt Reference Design
+### Alternative prompt specifications
 
-Rather than relying on one rewriting prompt, this adaptation creates four AI reference corpora:
+The current multi-prompt script implements four reference-corpus transformations:
 
-| Level | Prompt strategy | Intended transformation |
+| Level | Implemented prompt strategy | Intended use |
 | --- | --- | --- |
-| **A** | Extract factual key points | Minimal structural intervention |
-| **B** | Rewrite as bullet points | Light restructuring |
-| **C** | Rewrite into natural paragraphs | Moderate rewriting |
-| **D** | Rewrite from scratch in a professional tone | Strong rewriting |
+| **A** | Proofread spelling / grammar / punctuation only | Very light language intervention |
+| **B** | Rewrite wording and sentence structure while preserving factual content | Moderate stylistic rewriting |
+| **C** | Two-stage extraction of factual points followed by reconstruction as a formal peer review | Stronger structured rewriting |
+| **D** | Generate an independent reviewer-style critique using the human review only as contextual reference | Strong generative transformation |
 
-These levels are used as a **sensitivity-analysis device** for reference-corpus construction. They should not be interpreted as a validated clinical-style scale of “AI intervention depth.”
+These are **alternative reference-corpus specifications for sensitivity analysis**. They are not a validated ordinal scale of real-world AI-assistance intensity.
 
 ---
 
@@ -63,73 +63,42 @@ These levels are used as a **sensitivity-analysis device** for reference-corpus 
 
 `scripts/preprocess_elife.py`
 
-Transforms open peer-review data into the corpus structure required for downstream distribution estimation and inference.
+Transforms peer-review text into the corpus structure required for downstream distribution estimation and inference.
 
-### 2. Multi-prompt AI corpus generation
+### 2. AI reference-corpus workflows
 
-`scripts/generate_ai_multi_prompt.py`
+- `scripts/generate_ai_corpus.py` — two-stage reference-corpus generation used in the original eLife pilot.
+- `scripts/generate_ai_multi_prompt.py` — A/B/C/D alternative prompt specifications for sensitivity analysis.
+- `scripts/generate_ai_journal.py` — generalized journal-level corpus generation for later multi-journal work.
 
-Generates four prompt-specific AI reference corpora from human review samples so the downstream MLE estimates can be compared across alternative reference definitions.
+### 3. Distribution building and MLE inference
 
-### 3. Distribution-building workflow
+- `scripts/build_distribution.py`
+- `scripts/run_elife_pipeline.py`
+- `scripts/run_multi_prompt_pipeline.py`
 
-`scripts/build_distribution.py`
-
-Constructs the word-occurrence distributions used by the mixture-model framework.
-
-### 4. End-to-end inference pipeline
-
-`scripts/run_multi_prompt_pipeline.py`
-
-Runs preprocessing outputs through the prompt-specific distribution files and MLE workflow, then aggregates results for comparison.
-
-### 5. Documentation and reproducibility support
+### 4. Documentation and validation
 
 - `docs/pipeline-sop.md` — operation guide
 - `NOTE/` — method notes and code-reading notes
 - `validation/` — validation scripts and logs
-- `output/` — generated reports and visualizations
+- `output/` — project summaries / selected analysis outputs
 
 ---
 
-## Repository Structure
+## Evidence Currently Committed
 
-```text
-mle-llm-detection/
-├── scripts/
-│   ├── src/
-│   │   ├── MLE.py
-│   │   └── estimation.py
-│   ├── preprocess_elife.py
-│   ├── generate_ai_corpus.py
-│   ├── generate_ai_multi_prompt.py
-│   ├── build_distribution.py
-│   ├── run_elife_pipeline.py
-│   └── run_multi_prompt_pipeline.py
-├── processed_data/        # generated outputs; mostly gitignored
-├── NOTE/                  # learning and method notes
-├── Reference/             # reference material
-├── docs/
-│   └── pipeline-sop.md
-├── output/
-├── validation/
-├── THIRD_PARTY_NOTICES.md
-└── README.md
-```
+The repository currently contains an **exploratory eLife pilot** based on the earlier two-stage reference-corpus workflow. The committed report documents:
 
----
+- 218 usable eLife review records after preprocessing;
+- 40 pre-ChatGPT human reference reviews;
+- an eLife-specific word-distribution dictionary;
+- month-level MLE estimates with bootstrap uncertainty;
+- substantial instability in months with very small sample sizes.
 
-## Pilot Analysis
+The largest month in that pilot was December 2024 (`n = 95` review units), with an estimated `α` around 4% under that specific reference-corpus specification. This number should be interpreted as a **pipeline-specific exploratory estimate**, not a validated prevalence estimate for eLife or peer review generally.
 
-The current repository contains an **exploratory eLife pilot** using open peer-review data and four alternative AI reference corpora.
-
-In the pilot outputs, the estimated mixture proportion varies across prompt specifications, and the prompt-specific estimates show an ordered pattern in the current experiment.
-
-This should be treated as an **exploratory sensitivity result**, not as evidence that the four prompt levels form a validated measure of real-world AI-assistance intensity. The estimates depend on the construction of both the human and AI reference corpora, sample size, preprocessing decisions, vocabulary filtering, and model assumptions.
-
-### Why this matters
-
-The main methodological lesson is that **reference-corpus design is itself part of the statistical model**. A population-level estimate of LLM-modified content can change depending on how “AI-modified text” is operationalized, so robustness across alternative prompt constructions should be examined rather than assuming one prompt defines the ground truth.
+The A/B/C/D framework is implemented in code, but this public repository does **not currently contain a complete, independently verified multi-prompt result package**. Until that is added, this project should be read primarily as a methodological adaptation and reproducible research workflow rather than a definitive empirical finding.
 
 ---
 
@@ -139,41 +108,55 @@ This is a research and learning project, not a production detector.
 
 Key limitations include:
 
-- the current analysis is based on a limited pilot rather than a comprehensive multi-journal study;
-- prompt-generated AI reference corpora may not represent how researchers actually use LLMs during peer review;
-- `α` is a corpus-level statistical estimate and must not be interpreted as the probability that any individual review was AI-written;
-- estimates may be sensitive to preprocessing, vocabulary thresholds, reference-corpus composition, and model assumptions;
-- the current multi-prompt design is exploratory and requires broader validation before stronger claims can be made.
+- a small human reference corpus in the initial eLife pilot;
+- highly uneven month-level sample sizes;
+- dependence on prompt-generated AI reference corpora that may not reflect real-world LLM usage patterns;
+- sensitivity to preprocessing, vocabulary thresholds, reference-corpus composition, and model assumptions;
+- `α` is a **corpus-level mixture estimate**, not a probability that any individual review was AI-written;
+- the multi-prompt framework requires broader validation before stronger substantive claims are warranted.
 
 ---
 
-## Quick Start
+## Reproducibility
 
 ### Environment
 
-Python 3.8+ with core dependencies including:
+Python 3.8+ with packages including `pandas`, `numpy`, `scipy`, `swifter`, `matplotlib`, `spacy`, and either `anthropic` or `requests` depending on the generation script.
 
-- `pandas`
-- `numpy`
-- `scipy`
-- `swifter`
-- `matplotlib`
-
-AI reference-corpus generation additionally requires an API credential configured through the environment rather than hard-coded in source.
+API credentials and endpoints should be configured through environment variables rather than hard-coded source values.
 
 ```bash
 export DEEPSEEK_API_KEY="your-key-here"
+export DEEPSEEK_BASE_URL="https://your-api-endpoint.example"
+export DEEPSEEK_MODEL="your-model-name"
 ```
 
-### Run the multi-prompt workflow
+See `.env.example` for the expected configuration shape.
+
+### Run the eLife workflow
+
+```bash
+python scripts/generate_ai_corpus.py
+python scripts/build_distribution.py
+python scripts/run_elife_pipeline.py
+```
+
+### Run the alternative-prompt workflow
 
 ```bash
 python scripts/generate_ai_multi_prompt.py
-python scripts/build_distribution.py
 python scripts/run_multi_prompt_pipeline.py
 ```
 
-Generated analysis files are written under `processed_data/` and `output/` according to the pipeline configuration.
+Large raw and processed datasets are intentionally excluded from version control.
+
+---
+
+## Data & Publication Boundary
+
+This repository is intended to contain **code, documentation, derived summaries, and reproducibility instructions**, not a redistribution archive for third-party papers or large source datasets.
+
+Reference papers should be accessed from their original publishers / preprint repositories. Raw peer-review data should be used according to the terms of the original data source.
 
 ---
 
@@ -184,13 +167,13 @@ The statistical framework and core implementation in:
 - `scripts/src/MLE.py`
 - `scripts/src/estimation.py`
 
-are derived from the open-source repository:
+are derived from:
 
 [Weixin-Liang/Mapping-the-Increasing-Use-of-LLMs-in-Scientific-Papers](https://github.com/Weixin-Liang/Mapping-the-Increasing-Use-of-LLMs-in-Scientific-Papers)
 
 The upstream code is distributed under the **MIT License**. The original copyright and permission notice are reproduced in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
-The preprocessing, peer-review adaptation, multi-prompt reference-corpus workflow, orchestration, documentation, and project-specific analysis in this repository are extensions built for this project.
+The peer-review adaptation, preprocessing, prompt experiments, orchestration, documentation, and project-specific analysis in this repository are project-specific extensions.
 
 ---
 
