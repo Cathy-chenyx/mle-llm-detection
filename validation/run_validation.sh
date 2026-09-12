@@ -1,6 +1,20 @@
-#!/bin/bash
-cd "/Users/cathy/Documents/学习相关/老段课题组/AI_project/Mapping-the-Increasing-Use-of-LLMs-in-Scientific-Papers"
-/Users/cathy/miniconda3/envs/llm-detection/bin/python \
-  "/Users/cathy/Library/Application Support/com.tencent.mac.marvis/MarvisData/User/oAN1i2YiEe89jVMCbZef2QGssqcQ/workspace/conv_19f26b11ee6_a71b6b509f73/temp/run_validation_full.py" \
-  > "/Users/cathy/Documents/学习相关/老段课题组/AI_project/validation_log.txt" 2>&1
-echo "DONE" >> "/Users/cathy/Documents/学习相关/老段课题组/AI_project/validation_log.txt"
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Portable validation runner.
+# Run from anywhere inside the cloned repository.
+PROJECT_DIR="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+PYTHON_BIN="${PYTHON_BIN:-python}"
+VALIDATION_SCRIPT="${VALIDATION_SCRIPT:-$PROJECT_DIR/validation/run_validation_full.py}"
+LOG_FILE="${VALIDATION_LOG:-$PROJECT_DIR/validation/validation_log.txt}"
+
+if [[ ! -f "$VALIDATION_SCRIPT" ]]; then
+  echo "Validation script not found: $VALIDATION_SCRIPT" >&2
+  echo "Set VALIDATION_SCRIPT to the path of the validation entrypoint." >&2
+  exit 1
+fi
+
+cd "$PROJECT_DIR"
+"$PYTHON_BIN" "$VALIDATION_SCRIPT" > "$LOG_FILE" 2>&1
+echo "DONE" >> "$LOG_FILE"
+echo "Validation log written to: $LOG_FILE"
