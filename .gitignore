@@ -15,6 +15,11 @@ processed_data/
 # Backup files
 project_backups/
 
+# Generated validation/runtime logs
+validation/*.log
+validation/*_log.txt
+*.log
+
 # macOS
 .DS_Store
 **/.DS_Store
@@ -23,6 +28,8 @@ project_backups/
 __pycache__/
 *.pyc
 *.pyo
+.venv/
+venv/
 
 # Credentials and local secret configuration
 .env
@@ -31,3 +38,8 @@ __pycache__/
 *.key
 *.pem
 secrets/
+
+# Local databases / large private data
+*.sqlite
+*.sqlite3
+*.db
